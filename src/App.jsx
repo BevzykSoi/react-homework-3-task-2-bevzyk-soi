@@ -17,53 +17,56 @@ export default class App extends Component {
     loading: false,
   };
 
-  getImages = async query => {
-    const { currentPage } = this.state;
-
-    this.setState(() => ({
+  loadImages = async (searchQuery, page) => {
+    this.setState({
       loading: true,
-    }));
+    });
 
     const response = await axios
       .get(
-        `?q=${query}&page=${currentPage}&key=25630141-c60d9086e05d3bfd94790a09d&image_type=photo&orientation=horizontal&per_page=12`
+        `?q=${searchQuery}&page=${page}&key=25630141-c60d9086e05d3bfd94790a09d&image_type=photo&orientation=horizontal&per_page=12`
       )
       .catch(error => console.error(error))
       .finally(() => {
-        this.setState(() => ({
+        this.setState({
           loading: false,
-        }));
+        });
       });
 
-    this.setState(prevState => ({
-      images: [...prevState.images, ...response.data.hits],
-      currentPage: prevState.currentPage + 1,
-      query,
-    }));
+    this.setState({ currentPage: page, query: searchQuery });
+
+    return response.data.hits;
   };
 
   formSubmit = async query => {
-    await this.getImages(query);
+    // To show loader on the top of the page
+    this.setState({ images: [] });
+
+    const photos = await this.loadImages(query, 1);
+    this.setState({ images: photos });
   };
 
   loadMore = async event => {
     event.preventDefault();
 
-    const { query } = this.state;
+    const { query, currentPage } = this.state;
 
-    await this.getImages(query);
+    const photos = await this.loadImages(query, currentPage + 1);
+    this.setState(prevState => ({
+      images: [...prevState.images, ...photos],
+    }));
   };
 
   render() {
-    const { images, loading } = this.state;
+    const { images, loading, query } = this.state;
 
-    const renderingButton = images.length > 0 && !loading;
+    const renderingButton = query && images.length > 0 && !loading;
 
     return (
       <>
         <Searchbar submitForm={this.formSubmit} />
 
-        {images && <ImageGallery images={images} />}
+        {query && <ImageGallery images={images} />}
 
         {loading && (
           <TailSpin
