@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import ImageGallery from 'components/ImageGallery/ImageGallery';
 import Searchbar from 'components/Searchbar/Searchbar';
 import Button from 'components/Button/Button';
+import Modal from 'components/Modal/Modal';
 import axios from 'axios';
 
 import { TailSpin } from 'react-loader-spinner';
@@ -15,6 +16,9 @@ export default class App extends Component {
     currentPage: 1,
     query: '',
     loading: false,
+    showModal: false,
+    currentImage: "",
+    currentDesc: "",
   };
 
   loadImages = async (searchQuery, page) => {
@@ -57,16 +61,34 @@ export default class App extends Component {
     }));
   };
 
+  toggleModal = (bigUrl, name) => {
+    this.setState(prevState => ({
+      showModal: !prevState.showModal,
+      currentImage: bigUrl,
+      currentDesc: name,
+    }));
+  };
+
   render() {
-    const { images, loading, query } = this.state;
+    const { images, loading, query, showModal, currentImage, currentDesc } = this.state;
 
     const renderingButton = query && images.length > 0 && !loading;
 
     return (
       <>
+        {showModal && (
+          <Modal
+            largeImageURL={currentImage}
+            desc={currentDesc}
+            onClose={this.toggleModal}
+          />
+        )}
+
         <Searchbar submitForm={this.formSubmit} />
 
-        {query && <ImageGallery images={images} />}
+        {query && (
+          <ImageGallery images={images} changeModal={this.toggleModal} />
+        )}
 
         {loading && (
           <TailSpin
